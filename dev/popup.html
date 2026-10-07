@@ -27,10 +27,32 @@
       <button class="btn primary" id="notice-action">Allow camera</button>
     </div>
 
-    <section class="card list" aria-labelledby="g-title">
-      <h2 id="g-title" class="section-title">Gestures</h2>
-      <ul id="gestures"></ul>
+    <section class="card list" aria-labelledby="a-title">
+      <h2 id="a-title" class="section-title">Control</h2>
+      <ul>
+        <li class="stack">
+          <div class="text"><span>Start gestures</span><small id="activation-hint"></small></div>
+          <div class="seg full" id="activation" role="group" aria-label="When gestures work">
+            <button data-v="wake">Show palm</button><button data-v="raise">Raise hand</button><button data-v="always">Always</button>
+          </div>
+        </li>
+        <li>
+          <div class="text"><span>Hand</span><small>The other one is ignored</small></div>
+          <div class="seg" id="hand" role="group" aria-label="Which hand controls">
+            <button data-v="left">Left</button><button data-v="right">Right</button><button data-v="either">Either</button>
+          </div>
+        </li>
+      </ul>
     </section>
+
+    <details class="card list gestures" id="gestures-box">
+      <summary>
+        <span class="section-title">Gestures</span>
+        <span class="summary-count" id="gestures-count"></span>
+        <svg class="icon chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </summary>
+      <ul id="gestures"></ul>
+    </details>
 
     <section class="card list" aria-labelledby="s-title">
       <h2 id="s-title" class="section-title">Settings</h2>

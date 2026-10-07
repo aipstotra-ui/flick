@@ -27,11 +27,16 @@ async function main() {
   }
   const track = stream.getVideoTracks()[0];
   track.addEventListener("ended", () => status({ camera: "error", error: "The camera was disconnected." }));
+  const options = await chrome.runtime.sendMessage({ type: "ht/get-options" }).catch(() => ({}));
   const tracker = createTracker({
     track,
     landmarker,
+    options,
     onFrame: (frame) => chrome.runtime.sendMessage({ type: "ht/frame", ...frame }).catch(() => {}),
     onStatus: status,
+  });
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg && msg.type === "ht/options") tracker.setOptions(msg.options);
   });
   tracker.run();
 }

@@ -1,6 +1,6 @@
 // Service worker: starts and stops the camera, and routes gestures to the tab being watched.
 
-import { loadSettings, saveSettings } from "./shared/settings.js";
+import { engineOptions, loadSettings, saveSettings } from "./shared/settings.js";
 
 const OFFSCREEN = "src/offscreen/offscreen.html";
 const ONBOARDING = "src/onboarding/onboarding.html";
@@ -125,6 +125,9 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
     case "ht/status":
       setStatus(msg.status);
       return false;
+    case "ht/get-options":
+      loadSettings().then((s) => reply(engineOptions(s)));
+      return true;
     case "ht/camera-granted":
       restartTracking();
       return false;
@@ -146,6 +149,8 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "sync" && changes.settings) {
+    // The offscreen document cannot read storage: hand it what the engine needs.
+    loadSettings().then((s) => chrome.runtime.sendMessage({ type: "ht/options", options: engineOptions(s) }).catch(() => {}));
     const before = changes.settings.oldValue && changes.settings.oldValue.enabled;
     const after = changes.settings.newValue && changes.settings.newValue.enabled;
     if (before !== after) applyEnabled();

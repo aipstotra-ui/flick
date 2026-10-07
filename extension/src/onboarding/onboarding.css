@@ -65,3 +65,5 @@ main { max-width: 1040px; margin: 0 auto; padding: 56px 24px 64px; display: flex
 .checklist li.flash { background: var(--accent-soft); }
 
 .done .step-icon.ok { background: var(--accent); color: #fff; }
+.mode { margin: -2px 18px 8px; color: var(--text-2); font-size: 12px; }
+.checklist li.start .glyph { background: var(--accent-soft); color: var(--accent-text); }

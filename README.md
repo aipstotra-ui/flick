@@ -28,6 +28,20 @@ nothing is recorded or uploaded, and the camera is closed whenever gestures are 
 | Hold a peace sign | Full screen | |
 | Hold one finger up | Speed 1× → 1.25× → 1.5× → 2× | |
 
+### When gestures work
+
+So a hand in view doesn't control the video by accident, the popup's **Start gestures** setting
+decides when gestures count:
+
+| Mode | How it works |
+| --- | --- |
+| **Show palm** (default) | Hold an open palm up to the camera for half a second. The pill in the video's corner says *Listening*, and gestures work until 8 seconds pass without one. Each gesture keeps it listening. |
+| **Raise hand** | Gestures only count with your hand raised to chin or shoulder height. Hands on the desk or in your lap are ignored. |
+| **Always** | Any hand in view controls the video. |
+
+**Hand** picks which hand is followed: right (default), left or either. The other hand is ignored
+completely, so it can hold a drink or scratch your nose.
+
 A new hand must be in view for a quarter of a second before it does anything. A pinch that starts
 while the hand is moving fast is ignored, the hand coming back after a swipe is not read as a swipe
 the other way, and held poses only count when held still.
@@ -59,9 +73,10 @@ npm test
 ```
 
 `npm run e2e` is an end-to-end check on YouTube. It opens Playwright's Chromium (in a visible
-window, which MediaPipe needs for speed) with the extension loaded and a fake webcam that plays
-MediaPipe's sample hand photos: a thumbs up, a fist, one finger up, a swipe, and a peace sign. It
-then reports which gestures reached the page and what happened to the video.
+window) with the extension loaded and a fake webcam that plays MediaPipe's sample hand photos. With
+the default settings (show palm, right hand) it checks that a fist before waking, a left hand, and a
+fist after falling asleep are all ignored, and that the palm wakes it so a thumbs up, a fist, a swipe
+and a peace sign then like, mute, skip and go full screen.
 
 To look at the UI without loading the extension, serve the repository root
 (`python3 -m http.server 8765`) and open `/dev/overlay.html`, `/dev/popup.html?frames=1` or

@@ -9,10 +9,10 @@ import { GestureEngine } from "../engine/gestures.js";
 const IDLE_AFTER_MS = 3000;
 const IDLE_STRIDE = 3;
 
-export function createTracker({ track, landmarker, onFrame, onStatus = () => {}, withLandmarks = false }) {
+export function createTracker({ track, landmarker, onFrame, onStatus = () => {}, withLandmarks = false, options = {} }) {
   const settings = track.getSettings();
   const aspect = settings.width && settings.height ? settings.width / settings.height : 16 / 9;
-  const engine = new GestureEngine({ aspect });
+  const engine = new GestureEngine({ aspect, ...options });
   let stopped = false;
   let lastHandAt = performance.now();
   let lastTs = -1;
@@ -31,6 +31,9 @@ export function createTracker({ track, landmarker, onFrame, onStatus = () => {},
     const hands = res.landmarks.map((lm, i) => ({
       image: lm.map((p) => [1 - p.x, p.y, p.z]), // mirrored, so moving right moves right
       world: res.worldLandmarks[i].map((p) => [p.x, p.y, p.z]),
+      // The frame is given to MediaPipe as the camera took it, not mirrored, so its label names the
+      // user's own hand. (HoloTouch mirrored first, and so read each label as the other hand.)
+      handedness: res.handedness[i] && res.handedness[i][0] ? res.handedness[i][0].categoryName : null,
     }));
     if (hands.length) lastHandAt = now;
     const { events, state } = engine.update(hands, now / 1000);
@@ -88,6 +91,10 @@ export function createTracker({ track, landmarker, onFrame, onStatus = () => {},
   }
 
   return {
+    /** { activation, hand } from the settings. */
+    setOptions(opts) {
+      engine.setOptions(opts);
+    },
     run() {
       return typeof MediaStreamTrackProcessor === "function" ? runProcessor() : runVideo();
     },

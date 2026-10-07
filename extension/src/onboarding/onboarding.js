@@ -1,7 +1,7 @@
 import { loadLandmarker, openCamera } from "../offscreen/landmarker.js";
 import { createTracker } from "../offscreen/tracker.js";
 import { GESTURES, icon } from "../shared/gestures.js";
-import { saveSettings } from "../shared/settings.js";
+import { engineOptions, loadSettings, saveSettings } from "../shared/settings.js";
 
 const $ = (id) => document.getElementById(id);
 const CONNECTIONS = [
@@ -13,16 +13,36 @@ const FINISH_AFTER = 3; // gestures tried before setup counts as done
 
 for (const el of document.querySelectorAll("[data-icon]")) el.innerHTML = icon(el.dataset.icon);
 
+// The first step depends on how gestures start: a wake palm, a raised hand, or nothing.
+const START_STEP = {
+  wake: { key: "start", icon: "hand", how: "Hold up an open palm", does: "Starts listening for gestures" },
+  raise: { key: "start", icon: "hand", how: "Raise your hand to chin height", does: "Gestures work while it's up" },
+};
+const HAND_WORDS = { right: "your right hand", left: "your left hand", either: "either hand" };
+
+let settings = await loadSettings();
 const done = new Set();
 let finished = false;
 let toastTimer = 0;
 
+function steps() {
+  const start = START_STEP[settings.activation];
+  return start ? [start, ...GESTURES] : GESTURES;
+}
+
+function renderMode() {
+  const how = { wake: "Show your palm to start", raise: "Raise your hand to start", always: "Gestures always on" }[settings.activation];
+  $("mode-line").textContent = `${how} · using ${HAND_WORDS[settings.hand]}. Change this in the toolbar popup.`;
+}
+
 function renderChecklist() {
   const list = $("gesture-list");
   list.innerHTML = "";
-  for (const g of GESTURES) {
+  for (const g of steps()) {
     const li = document.createElement("li");
     li.id = `g-${g.key}`;
+    if (g.key === "start") li.classList.add("start");
+    if (done.has(g.key)) li.classList.add("done");
     li.innerHTML = `<span class="glyph">${icon(g.icon)}</span>
       <div class="text"><span></span><small></small></div>
       <span class="tick">${icon("check")}</span>`;
@@ -30,6 +50,16 @@ function renderChecklist() {
     li.querySelector(".text small").textContent = g.does;
     list.appendChild(li);
   }
+  $("count").textContent = `${done.size} of ${steps().length}`;
+}
+
+function tick(key) {
+  const li = $(`g-${key}`);
+  if (!li) return;
+  li.classList.add("done", "flash");
+  setTimeout(() => li.classList.remove("flash"), 600);
+  done.add(key);
+  $("count").textContent = `${done.size} of ${steps().length}`;
 }
 
 function toast(iconName, label) {
@@ -53,16 +83,26 @@ async function finish() {
 }
 
 function onEvent(e) {
+  if (e.type === "wake") {
+    toast("hand", "Listening");
+    tick("start");
+    return;
+  }
   const g = GESTURES.find((x) => x.event(e));
   if (!g) return;
-  const label = e.type === "swipe" ? `Swipe ${e.dir}` : g.does;
-  toast(g.icon, label);
-  const li = $(`g-${g.key}`);
-  li.classList.add("done", "flash");
-  setTimeout(() => li.classList.remove("flash"), 600);
-  done.add(g.key);
-  $("count").textContent = `${done.size} of ${GESTURES.length}`;
-  if (done.size >= FINISH_AFTER) finish();
+  toast(g.icon, e.type === "swipe" ? `Swipe ${e.dir}` : g.does);
+  tick(g.key);
+  if ([...done].filter((k) => k !== "start").length >= FINISH_AFTER) finish();
+}
+
+/** The same words as the pill on a video. */
+function chipText(state) {
+  if (!state.present) return "Raise your hand";
+  const side = state.side ? `${state.side === "right" ? "Right" : "Left"} hand · ` : "";
+  if (state.waking) return `${side}Waking… ${Math.round(state.waking * 100)}%`;
+  if (state.active === false) return `${side}${state.activation === "wake" ? "Show palm to start" : "Raise hand"}`;
+  if (state.hold) return `${side}Holding… ${Math.round(state.hold.progress * 100)}%`;
+  return `${side}${state.activation === "wake" ? "Listening · " : ""}${POSE_WORDS[state.pose] || "Hand"}`;
 }
 
 function draw(canvas, landmarks) {
@@ -108,13 +148,22 @@ async function startPractice(stream) {
   const tracker = createTracker({
     track: stream.getVideoTracks()[0].clone(),
     landmarker,
+    options: engineOptions(settings),
     withLandmarks: true,
     onFrame: ({ state, events, landmarks }) => {
       draw(canvas, landmarks);
-      chip.classList.toggle("ready", !!(state.present && state.armed));
-      $("chip-text").textContent = state.present ? (state.hold ? `Holding… ${Math.round(state.hold.progress * 100)}%` : POSE_WORDS[state.pose] || "Hand") : "Raise your hand";
+      chip.classList.toggle("ready", !!(state.present && state.armed && state.active !== false));
+      $("chip-text").textContent = chipText(state);
+      if (state.present && state.active && settings.activation === "raise") tick("start");
       events.forEach(onEvent);
     },
+  });
+  chrome.storage.onChanged.addListener(async (changes, area) => {
+    if (area !== "sync" || !changes.settings) return;
+    settings = await loadSettings();
+    tracker.setOptions(engineOptions(settings));
+    renderMode();
+    renderChecklist();
   });
   tracker.run();
   addEventListener("pagehide", () => {
@@ -141,6 +190,7 @@ async function allow() {
   }
 }
 
+renderMode();
 renderChecklist();
 $("allow").addEventListener("click", allow);
 

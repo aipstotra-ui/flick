@@ -8,6 +8,13 @@
 //   { type: "drag_end", axis, delta }
 //   { type: "swipe", dir: "up" | "down" | "left" | "right" }
 //   { type: "hold", name: "fist" | "thumbs_up" | "peace" | "point" }
+//   { type: "wake" }                                  an open palm woke gestures up ("wake" mode)
+//
+// Which gestures count is set with setOptions({ activation, hand }):
+//   activation "always": any followed hand, once in view for a moment
+//              "raise":  only while the hand is raised to chin or shoulder height
+//              "wake":   only for a while after an open palm is held up to the camera
+//   hand       "right", "left" or "either": the hand that is followed; the other is ignored
 
 import { FILTER, GESTURE, POSE } from "./config.js";
 import { extractFeatures } from "./features.js";
@@ -23,16 +30,37 @@ const HOLD_NAMES = {
 const OPPOSITE = { up: "down", down: "up", left: "right", right: "left" };
 
 export class GestureEngine {
-  constructor({ gesture = GESTURE, pose = POSE, filter = FILTER, aspect = 16 / 9 } = {}) {
+  constructor({ gesture = GESTURE, pose = POSE, filter = FILTER, aspect = 16 / 9, activation = "always", hand = "either" } = {}) {
     this.cfg = gesture;
     this.poseCfg = pose;
     this.filterCfg = filter;
     this.aspect = aspect;
+    this.activation = activation;
+    this.side = hand;
     this.reset();
   }
 
   reset() {
     this.hand = null; // the one hand being followed
+    this.awakeUntil = 0; // "wake" mode: gestures count until this time
+    this.wake = null; // { t, x, y, progress } while an open palm is being held up to wake
+  }
+
+  setOptions({ activation, hand } = {}) {
+    if (activation && activation !== this.activation) {
+      this.activation = activation;
+      this.awakeUntil = 0;
+      this.wake = null;
+    }
+    if (hand && hand !== this.side) {
+      this.side = hand;
+      this.hand = null;
+    }
+  }
+
+  /** Whether a hand labelled `side` ("Left"/"Right") may be followed. */
+  sideOk(side) {
+    return this.side === "either" || !side || side.toLowerCase() === this.side;
   }
 
   newHand(t, palm) {
@@ -45,6 +73,8 @@ export class GestureEngine {
       poses: new PoseTracker(this.poseCfg),
       pose: Pose.NEUTRAL,
       history: [],
+      side: 0, // -1 left .. +1 right, following MediaPipe's per-frame label
+      raised: false, // "raise" mode: above the line
       pinch: null, // { t, x, y, drag: null | axis, delta }
       hold: null, // { pose, t, x, y, fired }
       lastSwipe: null, // { t, dir }
@@ -61,9 +91,15 @@ export class GestureEngine {
         const d = Math.hypot(f.palm[0] - this.hand.palm[0], f.palm[1] - this.hand.palm[1]);
         if (d < bestD) [best, bestD] = [f, d];
       }
-      if (best) return best;
+      // The hand already followed stays followed while its remembered side is still the right one,
+      // even through a frame where MediaPipe labels it the other way.
+      if (best && (this.side === "either" || this.sideOk(this.hand.side > 0 ? "Right" : this.hand.side < 0 ? "Left" : null))) {
+        return best;
+      }
     }
-    return feats.reduce((a, b) => (b.palmScale > a.palmScale ? b : a));
+    const usable = feats.filter((f) => this.sideOk(f.side));
+    if (!usable.length) return null;
+    return usable.reduce((a, b) => (b.palmScale > a.palmScale ? b : a));
   }
 
   /**
@@ -83,10 +119,14 @@ export class GestureEngine {
       return { events, state: this.state(t) };
     }
 
-    if (!this.hand || (t - this.hand.lastSeen) * 1000 > this.cfg.lostMs) {
+    const jumped = this.hand && Math.hypot(f.palm[0] - this.hand.palm[0], f.palm[1] - this.hand.palm[1]) > 0.25;
+    if (jumped) this.endPinch(events, false);
+    if (!this.hand || jumped || (t - this.hand.lastSeen) * 1000 > this.cfg.lostMs) {
       this.hand = this.newHand(t, f.palm);
+      if (f.side) this.hand.side = f.side === "Right" ? 1 : -1;
     }
     const h = this.hand;
+    if (f.side) h.side += this.cfg.sideFollow * ((f.side === "Right" ? 1 : -1) - h.side);
     h.lastSeen = t;
     h.palm = f.palm;
     h.pos = h.filter.filter(f.palm, t);
@@ -97,14 +137,55 @@ export class GestureEngine {
     const prev = h.pose;
     h.pose = h.poses.update(f, t);
     const armed = (t - h.firstSeen) * 1000 >= this.cfg.armMs;
+    if (armed && this.activation === "wake") this.trackWake(h, t, events);
+    const active = armed && this.active(h, t);
 
-    if (prev !== h.pose) this.onPoseChange(prev, h, t, armed, events);
+    if (prev !== h.pose) this.onPoseChange(prev, h, t, active, events);
+    // A pinch already begun carries on to its release even if the hand leaves the raised zone.
     if (h.pinch) this.trackPinch(h, t, events);
-    if (armed) {
+    if (active) {
       this.trackHold(h, t, events);
       if (h.pose !== Pose.PINCH) this.detectSwipe(h, t, events);
+    } else {
+      h.hold = null;
+    }
+    // In "wake" mode every gesture keeps gestures awake for another listenMs.
+    if (this.activation === "wake" && (events.some((e) => e.type !== "wake") || h.pinch)) {
+      this.awakeUntil = t + this.cfg.listenMs / 1000;
     }
     return { events, state: this.state(t) };
+  }
+
+  /** Whether this hand's gestures count now, by the activation mode. */
+  active(h, t) {
+    if (this.activation === "wake") return t < this.awakeUntil;
+    if (this.activation === "raise") {
+      h.raised = h.pos[1] <= (h.raised ? this.cfg.raiseExitY : this.cfg.raiseEnterY);
+      return h.raised;
+    }
+    return true;
+  }
+
+  /** "wake" mode: an open palm facing the camera, held still for wakeMs, wakes gestures up. */
+  trackWake(h, t, events) {
+    const cfg = this.cfg;
+    const palmUp = h.pose === Pose.OPEN && h.feat.facing >= cfg.wakeFacing;
+    if (!palmUp) {
+      this.wake = null;
+      return;
+    }
+    const w = this.wake;
+    if (!w || Math.hypot(h.pos[0] - w.x, h.pos[1] - w.y) > cfg.wakeSlop) {
+      this.wake = { t, x: h.pos[0], y: h.pos[1], progress: 0, fired: false };
+      return;
+    }
+    w.progress = Math.min(((t - w.t) * 1000) / cfg.wakeMs, 1);
+    if (w.progress >= 1 && !w.fired) {
+      w.fired = true;
+      const wasAwake = t < this.awakeUntil;
+      this.awakeUntil = t + cfg.listenMs / 1000;
+      if (!wasAwake) events.push({ type: "wake" });
+    }
   }
 
   speed(h, t, span = 0.1) {
@@ -232,10 +313,19 @@ export class GestureEngine {
 
   state(t) {
     const h = this.hand;
-    if (!h) return { present: false };
+    const awake = this.activation === "wake" && t < this.awakeUntil;
+    if (!h) return { present: false, activation: this.activation, awake };
+    const armed = (t - h.firstSeen) * 1000 >= this.cfg.armMs;
     return {
       present: true,
-      armed: (t - h.firstSeen) * 1000 >= this.cfg.armMs,
+      activation: this.activation,
+      // Whether gestures count right now, and in "wake" mode how far along waking up is.
+      active: armed && (this.activation === "wake" ? awake : this.activation === "raise" ? h.raised : true),
+      awake,
+      listenLeft: awake ? this.awakeUntil - t : 0,
+      waking: this.activation === "wake" && !awake && this.wake && this.wake.progress > 0.1 ? this.wake.progress : 0,
+      side: h.side > 0 ? "right" : h.side < 0 ? "left" : null,
+      armed,
       x: h.pos[0],
       y: h.pos[1],
       pose: h.pose,

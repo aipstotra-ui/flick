@@ -57,7 +57,7 @@ export function worldLandmarks(pose) {
 }
 
 /** A hand whose palm centre is at (x, y) in the mirrored frame (0..1). */
-export function makeHand(pose, x, y) {
+export function makeHand(pose, x, y, handedness = "Right") {
   const world = worldLandmarks(pose);
   const palmW = [0, 5, 17].reduce((a, i) => [a[0] + world[i][0] / 3, a[1] + world[i][1] / 3], [0, 0]);
   const image = world.map((p) => [
@@ -65,7 +65,7 @@ export function makeHand(pose, x, y) {
     y + (p[1] - palmW[1]) * IMAGE_SCALE[1],
     p[2],
   ]);
-  return { image, world };
+  return { image, world, handedness };
 }
 
 /** Feeds 30 Hz synthetic frames into a GestureEngine and collects what it emits. */
@@ -77,14 +77,14 @@ export class Sim {
     this.state = null;
   }
 
-  /** hands(frac) -> list of [pose, x, y], frac running 0..1 over the duration. */
+  /** hands(frac) -> list of [pose, x, y, handedness?], frac running 0..1 over the duration. */
   run(duration, hands) {
     const frames = Math.round(duration * 30);
     for (let i = 0; i < frames; i++) {
       const frac = frames > 1 ? i / (frames - 1) : 1;
       const specs = hands ? hands(frac) : [];
       const out = this.engine.update(
-        specs.map(([p, x, y]) => makeHand(p, x, y)),
+        specs.map(([p, x, y, side]) => makeHand(p, x, y, side)),
         this.t,
       );
       this.events.push(...out.events);
@@ -93,8 +93,8 @@ export class Sim {
     }
   }
 
-  hold(duration, pose, x = 0.5, y = 0.5) {
-    this.run(duration, () => [[pose, x, y]]);
+  hold(duration, pose, x = 0.5, y = 0.5, side = "Right") {
+    this.run(duration, () => [[pose, x, y, side]]);
   }
 
   glide(duration, pose, [x0, y0], [x1, y1]) {

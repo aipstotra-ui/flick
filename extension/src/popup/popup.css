@@ -28,3 +28,16 @@ h1 { font-size: 15px; }
 
 .foot { display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 0; }
 .hint { color: var(--text-3); font-size: 11px; display: flex; gap: 3px; align-items: center; }
+
+.list li.stack { flex-direction: column; align-items: stretch; gap: 8px; padding: 8px 14px 10px; }
+.seg.full { display: flex; }
+.seg.full button { flex: 1; padding: 5px 6px; }
+
+.gestures summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 0; cursor: pointer; }
+.gestures summary::-webkit-details-marker { display: none; }
+.gestures summary .section-title { padding: 2px 14px; flex: 1; }
+.gestures summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--radius); }
+.summary-count { color: var(--text-2); font-size: 12px; }
+.chevron { width: 14px; height: 14px; color: var(--text-3); transition: transform 180ms ease; }
+.gestures[open] .chevron { transform: rotate(90deg); }
+.gestures[open] summary { border-bottom: 0.5px solid var(--line); }

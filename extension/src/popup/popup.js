@@ -27,18 +27,32 @@ function renderGestures() {
     input.addEventListener("change", async () => {
       settings = await saveSettings({ gestures: { [g.key]: input.checked } });
       li.className = input.checked ? "" : "off";
+      renderSettings();
     });
     list.appendChild(li);
   }
 }
 
+const ACTIVATION_HINTS = {
+  wake: "Hold an open palm up for a moment. Gestures then work until you stop for 8 seconds.",
+  raise: "Gestures only work with your hand raised to chin or shoulder height.",
+  always: "Any hand in view can control the video.",
+};
+
+function renderSegments(id, value) {
+  for (const b of $(id).querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.dataset.v === String(value)));
+}
+
 function renderSettings() {
+  renderSegments("activation", settings.activation);
+  renderSegments("hand", settings.hand);
+  $("activation-hint").textContent = ACTIVATION_HINTS[settings.activation];
+  const on = GESTURES.filter((g) => settings.gestures[g.key]).length;
+  $("gestures-count").textContent = `${on} of ${GESTURES.length} on`;
   $("enabled").checked = settings.enabled;
   $("showHand").checked = settings.showHand;
   $("extras").checked = settings.extras;
-  for (const b of $("seek").querySelectorAll("button")) {
-    b.setAttribute("aria-pressed", String(Number(b.dataset.v) === settings.seekStep));
-  }
+  renderSegments("seek", settings.seekStep);
 }
 
 const POSE_WORDS = { pinch: "Pinch", fist: "Fist", thumbs_up: "Thumbs up", peace: "Peace sign", point: "Pointing", open: "Open hand" };
@@ -56,8 +70,11 @@ function renderStatus() {
   switch (status.camera) {
     case "on": {
       dot.classList.add("on");
-      if (live && live.state && live.state.present) {
-        text.textContent = `${POSE_WORDS[live.state.pose] || "Hand"} seen · ${live.fps} fps`;
+      const st = live && live.state;
+      if (st && st.present && st.active === false) {
+        text.textContent = `${st.activation === "wake" ? "Show your palm to start" : "Raise your hand to start"} · ${live.fps} fps`;
+      } else if (st && st.present) {
+        text.textContent = `${POSE_WORDS[st.pose] || "Hand"} seen${st.awake ? " · listening" : ""} · ${live.fps} fps`;
       } else {
         text.textContent = live ? `Watching for your hand · ${live.fps} fps` : "Watching for your hand";
       }
@@ -96,6 +113,14 @@ $("seek").addEventListener("click", async (e) => {
   settings = await saveSettings({ seekStep: v });
   renderSettings();
 });
+for (const key of ["activation", "hand"]) {
+  $(key).addEventListener("click", async (e) => {
+    const v = e.target.dataset && e.target.dataset.v;
+    if (!v) return;
+    settings = await saveSettings({ [key]: v });
+    renderSettings();
+  });
+}
 $("practice").addEventListener("click", () => chrome.tabs.create({ url: ONBOARDING }));
 $("notice-action").addEventListener("click", () => chrome.tabs.create({ url: ONBOARDING }));
 

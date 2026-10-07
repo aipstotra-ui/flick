@@ -167,6 +167,10 @@
     HTOverlay.hand(msg.state, { video, show: settings.showHand && (video || settings.extras) });
     for (const e of msg.events) {
       if (debug) console.debug("[HoloTouch]", JSON.stringify(e), video ? `on ${site.name} video` : "on page");
+      if (e.type === "wake") {
+        if (video || settings.extras) HTOverlay.toast(video, "hand", "Listening");
+        continue;
+      }
       if (video) onVideoEvent(e, video, site);
       else if (settings.extras) onPageEvent(e);
     }

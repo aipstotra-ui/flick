@@ -83,6 +83,7 @@ export function extractFeatures(hand, aspect = 16 / 9) {
   const thumbVec = sub(thumb, w[THUMB_MCP]);
   const thumbLen = norm(thumbVec);
   return {
+    side: hand.handedness || null, // "Left" or "Right": the user's own hand, as MediaPipe reads it
     palm,
     palmScale: picturePalm(img, aspect),
     pinchIndex: Math.min(dist(thumb, w[INDEX_TIP]) / palmLen, picturePinch(img, aspect)),

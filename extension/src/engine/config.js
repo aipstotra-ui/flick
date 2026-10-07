@@ -62,6 +62,21 @@ export const GESTURE = {
   // Poses held still this long fire once.
   holdMs: { fist: 500, thumbs_up: 450, peace: 600, point: 600 },
   holdSlop: 0.05,
+
+  // Activation ("activation" setting). In "wake" mode an open palm, facing the camera and held
+  // still for wakeMs, starts gestures; they stop after listenMs with no gesture.
+  wakeMs: 500,
+  wakeSlop: 0.04,
+  wakeFacing: 0.6,
+  listenMs: 8000,
+  // In "raise" mode the palm must be above raiseEnterY of the frame (0 is the top) to start
+  // gestures, and drops out below raiseExitY. Chin and shoulder height sit around 0.45 to 0.6 on a
+  // laptop camera; hands on a desk or a lap sit below 0.75.
+  raiseEnterY: 0.62,
+  raiseExitY: 0.7,
+  // How quickly the followed hand's left/right reading follows MediaPipe's per-frame label (0..1).
+  // One misread frame does not turn a right hand into a left one.
+  sideFollow: 0.25,
 };
 
 export const FILTER = {

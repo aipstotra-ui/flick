@@ -80,6 +80,17 @@ var HTOverlay = (() => {
     }
   `;
 
+  /** What the corner pill says: what the hand is doing, or what it takes to start. */
+  function chipLabel(state, { active, pinching, hold, waking }) {
+    if (waking) return "Waking";
+    if (!state.armed) return "Hand";
+    if (!active) return state.activation === "wake" ? "Show palm to start" : state.activation === "raise" ? "Raise hand" : "Hand";
+    if (hold) return HOLD_LABEL[hold.name];
+    if (state.drag) return state.drag.axis === "x" ? "Scrubbing" : "Volume";
+    if (pinching) return "Pinch";
+    return state.activation === "wake" ? "Listening" : "Ready";
+  }
+
   let host = null;
   let els = null;
   let toastTimer = 0;
@@ -161,19 +172,19 @@ var HTOverlay = (() => {
       anchor = video || anchor;
       const visible = !!(state && state.present && show);
       els.chip.classList.toggle("on", visible);
-      els.cursor.classList.toggle("on", visible && state.armed);
+      // The cursor only shows while gestures count, so it never suggests a hand is in control when it isn't.
+      const active = visible && state.armed && state.active !== false;
+      els.cursor.classList.toggle("on", active);
       if (!visible) return;
-      const pinching = state.pose === "pinch";
-      const hold = state.hold;
-      els.chip.classList.toggle("ready", state.armed);
+      const pinching = active && state.pose === "pinch";
+      const hold = active ? state.hold : null;
+      const waking = state.waking || 0;
+      els.chip.classList.toggle("ready", active);
       els.chip.classList.toggle("pinch", pinching);
-      els.chip.classList.toggle("holding", !!hold);
-      els.chipLabel.textContent = hold
-        ? HOLD_LABEL[hold.name]
-        : state.drag
-          ? state.drag.axis === "x" ? "Scrubbing" : "Volume"
-          : pinching ? "Pinch" : state.armed ? "Ready" : "Hand";
-      if (hold) els.ringFill.style.strokeDashoffset = String(44 * (1 - hold.progress));
+      els.chip.classList.toggle("holding", !!hold || waking > 0);
+      els.chipLabel.textContent = chipLabel(state, { active, pinching, hold, waking });
+      const ring = hold ? hold.progress : waking;
+      if (ring) els.ringFill.style.strokeDashoffset = String(44 * (1 - ring));
       // The cursor shows where the hand is over the video, from the middle 80% of the camera's view.
       const u = Math.min(Math.max((state.x - 0.1) / 0.8, 0), 1);
       const v = Math.min(Math.max((state.y - 0.1) / 0.8, 0), 1);

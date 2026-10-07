@@ -17,35 +17,45 @@ const W = 480;
 const H = 270;
 const FPS = 30;
 const PHOTOS = {
-  thumbs_up: "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/thumbs_up.jpg",
-  fist: "https://storage.googleapis.com/mediapipe-assets/fist.jpg",
-  point: "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/pointing_up.jpg",
-  relaxed: "https://storage.googleapis.com/mediapipe-tasks/hand_landmarker/woman_hands.jpg",
-  peace: "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/victory.jpg",
+  palm: "https://storage.googleapis.com/mediapipe-assets/right_hands.jpg", // right hands, open, facing the camera
+  thumbs_up: "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/thumbs_up.jpg", // right
+  fist: "https://storage.googleapis.com/mediapipe-assets/fist.jpg", // right
+  point: "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/pointing_up.jpg", // a LEFT hand
+  peace: "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/victory.jpg", // right
 };
+// Run with the default settings: gestures start with a wake palm, right hand only.
 // [seconds, photo or null, x centre in the raw (unmirrored) frame from start to end]
 // The tracker mirrors the picture, so a photo moving left in the raw frame is a swipe right.
 const SCRIPT = [
   [2.0, null],
-  [2.5, "thumbs_up", 0.5],
+  [2.5, "fist", 0.5], // asleep: ignored
   [1.0, null],
-  [2.5, "fist", 0.5],
+  [1.5, "palm", 0.5], // wakes gestures
+  [0.5, null],
+  [2.5, "thumbs_up", 0.5], // like
+  [0.5, null],
+  [2.5, "point", 0.5], // a left hand: ignored
+  [0.5, null],
+  [2.5, "fist", 0.5], // mute
+  [0.5, null],
+  [1.0, "palm", 0.68],
+  [0.2, "palm", [0.68, 0.32]], // swipe right: +10 s
+  [1.3, "palm", 0.32],
   [1.0, null],
-  [2.5, "point", 0.5],
+  [2.5, "peace", 0.5], // full screen
+  [10.0, null], // falls asleep after 8 s without a gesture
+  [2.5, "fist", 0.5], // asleep again: ignored
   [1.0, null],
-  [1.0, "relaxed", 0.68],
-  [0.2, "relaxed", [0.68, 0.32]],
-  [1.3, "relaxed", 0.32],
-  [1.0, null],
-  [2.5, "peace", 0.5],
-  [3.0, null],
 ];
 const EXPECT = [
+  ["asleepIgnored", "fist before waking → ignored"],
+  ["wake", "open palm → wakes up"],
   ["like", "thumbs up → like"],
+  ["leftIgnored", "left hand pointing → ignored (right hand only)"],
   ["mute", "fist → mute"],
-  ["speed", "one finger up → speed 1.25×"],
   ["seek", "swipe right → +10 s"],
   ["fullscreen", "peace sign → full screen"],
+  ["sleepIgnored", "fist after 8 s idle → ignored (asleep again)"],
 ];
 
 async function photosRGBA(browser) {
@@ -183,9 +193,10 @@ async function main() {
   });
   console.log("Before:", before);
 
-  await sw.evaluate(() => chrome.storage.sync.set({ settings: { enabled: true } }));
+  await sw.evaluate(() => chrome.storage.sync.set({ settings: { enabled: true, activation: "wake", hand: "right" } }));
   const states = [];
-  const total = SCRIPT.reduce((a, s) => a + s[0], 0) + 6;
+  // One pass of the fake webcam (it loops), plus the moment the camera takes to start.
+  const total = SCRIPT.reduce((a, s) => a + s[0], 0) + 2.5;
   const end = Date.now() + total * 1000;
   let last = null;
   let lastStatus = null;
@@ -220,14 +231,24 @@ async function main() {
   console.log("\nChanges to the video:");
   console.log(states.join("\n"));
   console.log(`\nWindow state at the end: ${fullscreen}`);
-  const text = log.join("\n");
+  // The gestures in the order they reached the page, e.g. ["wake", "hold:thumbs_up", ...].
+  const seq = log
+    .map((line) => JSON.parse(line.slice(line.indexOf("{"), line.lastIndexOf("}") + 1)))
+    .map((e) => (e.type === "hold" ? `hold:${e.name}` : e.type === "swipe" ? `swipe:${e.dir}` : e.type))
+    .filter((t) => !t.startsWith("drag"));
+  const wakeAt = seq.indexOf("wake");
+  const fists = seq.filter((t) => t === "hold:fist").length;
   const seen = {
-    like: /"hold","name":"thumbs_up"/.test(text),
-    mute: /"hold","name":"fist"/.test(text),
-    speed: /"hold","name":"point"/.test(text),
-    seek: /"swipe","dir":"right"/.test(text),
-    fullscreen: /"hold","name":"peace"/.test(text),
+    asleepIgnored: wakeAt >= 0 && !seq.slice(0, wakeAt).includes("hold:fist"),
+    wake: wakeAt >= 0,
+    like: seq.includes("hold:thumbs_up"),
+    leftIgnored: !seq.includes("hold:point"),
+    mute: fists >= 1 && last.muted,
+    seek: seq.includes("swipe:right"),
+    fullscreen: seq.includes("hold:peace") && fullscreen === "fullscreen",
+    sleepIgnored: fists === 1,
   };
+  console.log(`\nSequence: ${seq.join(" → ")}`);
   console.log("\nResult:");
   for (const [k, label] of EXPECT) console.log(`  ${seen[k] ? "✔" : "✖"} ${label}`);
   await page.screenshot({ path: join(work, "youtube.png") });
