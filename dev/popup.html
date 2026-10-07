@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>HoloTouch</title>
+    <script src="/dev/chrome-stub.js"></script>
+    <link rel="stylesheet" href="/extension/src/shared/ui.css" />
+    <link rel="stylesheet" href="/extension/src/popup/popup.css" />
+  </head>
+  <body>
+    <header class="head">
+      <div class="brand">
+        <img src="/extension/icons/icon48.png" alt="" width="28" height="28" />
+        <div>
+          <h1>HoloTouch</h1>
+          <p class="status"><span class="dot" id="dot"></span><span id="status-text">Off</span></p>
+        </div>
+      </div>
+      <label class="switch large" title="Turn gesture control on or off (Alt+Shift+H)">
+        <input type="checkbox" id="enabled" aria-label="Gesture control" />
+        <span></span>
+      </label>
+    </header>
+
+    <div class="notice card" id="notice" hidden>
+      <p id="notice-text"></p>
+      <button class="btn primary" id="notice-action">Allow camera</button>
+    </div>
+
+    <section class="card list" aria-labelledby="g-title">
+      <h2 id="g-title" class="section-title">Gestures</h2>
+      <ul id="gestures"></ul>
+    </section>
+
+    <section class="card list" aria-labelledby="s-title">
+      <h2 id="s-title" class="section-title">Settings</h2>
+      <ul>
+        <li>
+          <div class="text"><span>Swipe skips</span></div>
+          <div class="seg" id="seek" role="group" aria-label="Seconds a sideways swipe skips">
+            <button data-v="5">5 s</button><button data-v="10">10 s</button><button data-v="15">15 s</button><button data-v="30">30 s</button>
+          </div>
+        </li>
+        <li>
+          <div class="text"><span>Show hand on video</span></div>
+          <label class="switch"><input type="checkbox" id="showHand" aria-label="Show hand on video" /><span></span></label>
+        </li>
+        <li>
+          <div class="text"><span>Gestures on other pages</span><small>Swipe to scroll and switch tabs</small></div>
+          <label class="switch"><input type="checkbox" id="extras" aria-label="Gestures on other pages" /><span></span></label>
+        </li>
+      </ul>
+    </section>
+
+    <footer class="foot">
+      <button class="btn" id="practice">Practice gestures</button>
+      <span class="hint"><kbd>Alt</kbd><kbd>Shift</kbd><kbd>H</kbd> on/off</span>
+    </footer>
+
+    <script type="module" src="/extension/src/popup/popup.js"></script>
+  </body>
+</html>

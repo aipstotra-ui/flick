@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "HoloTouch",
+  "version": "0.1.0",
+  "description": "Control videos and shorts with hand gestures through your webcam. Everything runs on your computer.",
+  "minimum_chrome_version": "116",
+  "permissions": ["offscreen", "storage"],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "HoloTouch",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "commands": {
+    "toggle-holotouch": {
+      "suggested_key": { "default": "Alt+Shift+H" },
+      "description": "Turn gesture control on or off"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/sites.js", "src/content/overlay.js", "src/content/controller.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.netflix.com/*"],
+      "js": ["src/content/netflix-main.js"],
+      "world": "MAIN",
+      "run_at": "document_idle"
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
+}

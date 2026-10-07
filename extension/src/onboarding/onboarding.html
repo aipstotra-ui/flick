@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Set up HoloTouch</title>
+    <link rel="icon" href="../../icons/icon32.png" />
+    <link rel="stylesheet" href="../shared/ui.css" />
+    <link rel="stylesheet" href="onboarding.css" />
+  </head>
+  <body>
+    <main>
+      <header class="hero">
+        <img src="../../icons/icon128.png" alt="" width="64" height="64" />
+        <h1>Control videos with your hand</h1>
+        <p>Pause, scrub and skip YouTube, Shorts, TikTok, Reels and Netflix from across the room. No mouse needed.</p>
+        <ul class="promises">
+          <li><span data-icon="lock"></span>Video never leaves your computer</li>
+          <li><span data-icon="battery"></span>Camera closes when it's off</li>
+          <li><span data-icon="keyboard"></span><kbd>Alt</kbd><kbd>Shift</kbd><kbd>H</kbd> turns it on or off</li>
+        </ul>
+      </header>
+
+      <section class="step card" id="step-camera">
+        <div class="step-icon" data-icon="camera"></div>
+        <div class="step-body">
+          <h2>Allow your camera</h2>
+          <p>Chrome will ask once. HoloTouch only measures where your fingers are. It doesn't record or upload anything.</p>
+          <p class="error" id="camera-error" hidden></p>
+        </div>
+        <button class="btn primary big" id="allow">Allow camera</button>
+      </section>
+
+      <section class="practice" id="step-practice" hidden>
+        <div class="stage card">
+          <div class="preview" id="preview">
+            <video id="video" muted playsinline></video>
+            <canvas id="canvas"></canvas>
+            <div class="chip glass" id="chip"><span class="chip-dot"></span><span id="chip-text">Raise your hand</span></div>
+            <div class="toast glass" id="toast"></div>
+            <div class="loading" id="loading"><span class="dot busy"></span>Loading hand model…</div>
+          </div>
+          <p class="tip">Sit about an arm's length from the camera, with your palm toward it. Keep your hand in good light.</p>
+        </div>
+        <div class="checklist card">
+          <div class="checklist-head">
+            <h2>Try each gesture</h2>
+            <span class="count" id="count">0 of 8</span>
+          </div>
+          <ul id="gesture-list"></ul>
+        </div>
+      </section>
+
+      <section class="step card done" id="step-done" hidden>
+        <div class="step-icon ok" data-icon="check"></div>
+        <div class="step-body">
+          <h2>You're set</h2>
+          <p>Gestures are on. Open a video, raise your hand, and look for the small <em>Ready</em> pill in its corner.</p>
+        </div>
+        <div class="actions">
+          <a class="btn primary big" href="https://www.youtube.com/shorts" target="_blank" rel="noopener">Try it on YouTube Shorts</a>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="onboarding.js"></script>
+  </body>
+</html>

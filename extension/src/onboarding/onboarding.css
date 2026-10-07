@@ -1,0 +1,67 @@
+body { min-height: 100vh; }
+main { max-width: 1040px; margin: 0 auto; padding: 56px 24px 64px; display: flex; flex-direction: column; gap: 20px; }
+
+.hero { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 12px; }
+.hero img { border-radius: 16px; box-shadow: var(--shadow); }
+.hero h1 { font-size: 32px; letter-spacing: -0.02em; margin-top: 8px; }
+.hero > p { margin: 0; max-width: 520px; color: var(--text-2); font-size: 15px; }
+.promises { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px;
+  color: var(--text-2); font-size: 13px; }
+.promises li { display: flex; align-items: center; gap: 6px; }
+.promises .icon { width: 15px; height: 15px; color: var(--accent); }
+
+.step { display: flex; align-items: center; gap: 18px; padding: 22px 24px; }
+.step-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; flex: none;
+  background: var(--accent-soft); color: var(--accent-text); }
+.step-icon .icon { width: 22px; height: 22px; }
+.step-body { flex: 1; }
+.step-body h2 { font-size: 17px; }
+.step-body p { margin: 4px 0 0; color: var(--text-2); }
+.error { color: var(--danger) !important; }
+.actions { display: flex; gap: 8px; }
+
+.practice { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 820px) { .practice { grid-template-columns: 1fr; } .step { flex-wrap: wrap; } }
+
+.stage { padding: 10px; }
+.preview { position: relative; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #000; }
+.preview video, .preview canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.preview video { transform: scaleX(-1); opacity: 0.85; }
+.tip { margin: 10px 6px 4px; color: var(--text-2); font-size: 12px; }
+
+/* The same glass as the on-video overlay. */
+.glass { background: rgba(28, 28, 32, 0.52); border: 0.5px solid rgba(255, 255, 255, 0.22); color: #fff;
+  -webkit-backdrop-filter: blur(22px) saturate(1.7); backdrop-filter: blur(22px) saturate(1.7); }
+.chip { position: absolute; top: 12px; right: 12px; display: flex; align-items: center; gap: 7px;
+  padding: 5px 11px 5px 9px; border-radius: 999px; font-size: 12px; font-weight: 500; }
+.chip-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, 0.45); }
+.chip.ready .chip-dot { background: #5dcaa5; }
+.toast { position: absolute; left: 50%; top: 50%; display: flex; align-items: center; gap: 9px; padding: 10px 18px;
+  border-radius: 999px; font-size: 14px; font-weight: 500; white-space: nowrap; opacity: 0;
+  transform: translate(-50%, -50%) scale(0.92); transition: opacity 160ms ease, transform 220ms cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+.toast.on { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.toast .icon { width: 18px; height: 18px; }
+.loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 8px;
+  color: rgba(255, 255, 255, 0.8); font-size: 13px; }
+
+.checklist { padding: 8px 0; }
+.checklist-head { display: flex; align-items: baseline; justify-content: space-between; padding: 10px 18px 8px; }
+.checklist-head h2 { font-size: 15px; }
+.count { color: var(--text-2); font-size: 12px; font-variant-numeric: tabular-nums; }
+.checklist ul { list-style: none; margin: 0; padding: 0; }
+.checklist li { display: flex; align-items: center; gap: 12px; padding: 9px 18px; transition: background 300ms ease; }
+.checklist li + li { border-top: 0.5px solid var(--line); }
+.checklist .glyph { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; flex: none;
+  background: var(--track-off); color: var(--text-2); transition: background 200ms ease, color 200ms ease; }
+.checklist .glyph .icon { width: 16px; height: 16px; }
+.checklist .text { flex: 1; display: flex; flex-direction: column; }
+.checklist .text span { font-weight: 500; }
+.checklist .text small { color: var(--text-2); font-size: 12px; }
+.checklist .tick { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--line-strong); display: grid; place-items: center;
+  color: transparent; transition: all 200ms ease; }
+.checklist .tick .icon { width: 12px; height: 12px; stroke-width: 3; }
+.checklist li.done .glyph { background: var(--accent-soft); color: var(--accent-text); }
+.checklist li.done .tick { background: var(--accent); border-color: var(--accent); color: #fff; }
+.checklist li.flash { background: var(--accent-soft); }
+
+.done .step-icon.ok { background: var(--accent); color: #fff; }
