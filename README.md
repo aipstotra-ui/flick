@@ -58,6 +58,11 @@ npm install
 npm test
 ```
 
+`npm run e2e` is an end-to-end check on YouTube. It opens Playwright's Chromium (in a visible
+window, which MediaPipe needs for speed) with the extension loaded and a fake webcam that plays
+MediaPipe's sample hand photos: a thumbs up, a fist, one finger up, a swipe, and a peace sign. It
+then reports which gestures reached the page and what happened to the video.
+
 To look at the UI without loading the extension, serve the repository root
 (`python3 -m http.server 8765`) and open `/dev/overlay.html`, `/dev/popup.html?frames=1` or
 `/dev/onboarding.html`. `dev/chrome-stub.js` stands in for the `chrome.*` APIs.

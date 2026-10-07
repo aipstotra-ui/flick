@@ -20,7 +20,7 @@ async function main() {
   }
   let landmarker;
   try {
-    landmarker = await loadLandmarker();
+    landmarker = await loadLandmarker("CPU");
   } catch (err) {
     status({ camera: "error", error: `Couldn't load the hand model: ${err && err.message}` });
     return;

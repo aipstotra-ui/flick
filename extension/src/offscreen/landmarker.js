@@ -9,7 +9,11 @@ export async function openCamera() {
   });
 }
 
-export async function loadLandmarker() {
+/**
+ * delegate is "GPU" or "CPU". The offscreen document uses the CPU: there, the GPU delegate measured
+ * about 330 ms a frame, against 20 ms or so for either in a visible page.
+ */
+export async function loadLandmarker(delegate = "GPU") {
   const fileset = await FilesetResolver.forVisionTasks(chrome.runtime.getURL("vendor/mediapipe/wasm"));
   const options = (delegate) => ({
     baseOptions: { modelAssetPath: chrome.runtime.getURL("models/hand_landmarker.task"), delegate },
@@ -19,6 +23,7 @@ export async function loadLandmarker() {
     minHandPresenceConfidence: 0.6,
     minTrackingConfidence: 0.5,
   });
+  if (delegate === "CPU") return HandLandmarker.createFromOptions(fileset, options("CPU"));
   try {
     return await HandLandmarker.createFromOptions(fileset, options("GPU"));
   } catch (err) {

@@ -6,6 +6,8 @@ const OFFSCREEN = "src/offscreen/offscreen.html";
 const ONBOARDING = "src/onboarding/onboarding.html";
 
 let activeTabId = null;
+// Counts for debugging, readable from the service worker console as `stats`.
+const stats = (self.stats = { frames: 0, withHand: 0, events: 0, poses: {} });
 let creating = null;
 const windowStateBefore = new Map(); // windowId -> state before we made it fullscreen
 
@@ -111,6 +113,13 @@ async function toggleFullscreen(windowId) {
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   switch (msg && msg.type) {
     case "ht/frame":
+      stats.frames++;
+      if (msg.state && msg.state.present) {
+        stats.withHand++;
+        stats.poses[msg.state.pose] = (stats.poses[msg.state.pose] || 0) + 1;
+      }
+      stats.events += msg.events.length;
+      stats.perf = msg.perf;
       toActiveTab(msg);
       return false;
     case "ht/status":

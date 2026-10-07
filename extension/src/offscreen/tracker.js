@@ -18,12 +18,16 @@ export function createTracker({ track, landmarker, onFrame, onStatus = () => {},
   let lastTs = -1;
   let count = 0;
   let fpsWindow = [];
+  const perf = { read: 0, processed: 0, detectMs: 0 }; // for debugging: frames read and examined
 
   function process(source, now) {
     // detectForVideo needs strictly increasing timestamps.
     const ts = Math.max(now, lastTs + 1);
     lastTs = ts;
+    const started = performance.now();
     const res = landmarker.detectForVideo(source, ts);
+    perf.processed++;
+    perf.detectMs += performance.now() - started;
     const hands = res.landmarks.map((lm, i) => ({
       image: lm.map((p) => [1 - p.x, p.y, p.z]), // mirrored, so moving right moves right
       world: res.worldLandmarks[i].map((p) => [p.x, p.y, p.z]),
@@ -32,7 +36,7 @@ export function createTracker({ track, landmarker, onFrame, onStatus = () => {},
     const { events, state } = engine.update(hands, now / 1000);
     fpsWindow.push(now);
     while (fpsWindow.length && now - fpsWindow[0] > 1000) fpsWindow.shift();
-    const frame = { state, events, fps: fpsWindow.length };
+    const frame = { state, events, fps: fpsWindow.length, perf };
     if (withLandmarks) frame.landmarks = hands.map((h) => h.image);
     onFrame(frame);
   }
@@ -50,6 +54,7 @@ export function createTracker({ track, landmarker, onFrame, onStatus = () => {},
       const { value: frame, done } = await reader.read();
       if (done) break;
       const now = performance.now();
+      perf.read++;
       try {
         if (!shouldSkip(now)) process(frame, now);
       } catch (err) {

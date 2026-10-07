@@ -20,6 +20,11 @@
   let settings = DEFAULTS;
   let drag = null; // { axis, video, from, lastSeek }
   let lastFrameAt = 0;
+  let debug = false;
+  try {
+    // Set localStorage["holotouch:debug"] on a page to log the gestures that reach it.
+    debug = !!localStorage.getItem("holotouch:debug");
+  } catch {}
 
   function merge(s) {
     return { ...DEFAULTS, ...s, gestures: { ...DEFAULTS.gestures, ...(s && s.gestures) } };
@@ -161,6 +166,7 @@
     const site = HTSites.adapter();
     HTOverlay.hand(msg.state, { video, show: settings.showHand && (video || settings.extras) });
     for (const e of msg.events) {
+      if (debug) console.debug("[HoloTouch]", JSON.stringify(e), video ? `on ${site.name} video` : "on page");
       if (video) onVideoEvent(e, video, site);
       else if (settings.extras) onPageEvent(e);
     }
