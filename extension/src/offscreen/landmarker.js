@@ -2,6 +2,19 @@
 
 import { FilesetResolver, HandLandmarker } from "../../vendor/mediapipe/vision_bundle.mjs";
 
+// MediaPipe's runtime writes its routine log lines ("W1007 19:32:28.342 gl_context.cc:1135] ...",
+// "INFO: Created TensorFlow Lite XNNPACK delegate") through console.error, which Chrome lists as
+// extension errors. Drop its info and warning lines; its real errors (E and F) still get through.
+// This has to run before the runtime loads, since it keeps a reference to console.error.
+const MEDIAPIPE_NOISE = /^(?:[IW]\d{4} \d\d:\d\d:\d\d\.\d+ +\d+ [\w.]+:\d+\]|INFO: )/;
+for (const level of ["error", "warn", "log", "info"]) {
+  const original = console[level];
+  console[level] = function (...args) {
+    if (typeof args[0] === "string" && MEDIAPIPE_NOISE.test(args[0])) return;
+    original.apply(console, args);
+  };
+}
+
 export async function openCamera() {
   return navigator.mediaDevices.getUserMedia({
     video: { width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { ideal: 30 } },
