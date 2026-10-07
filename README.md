@@ -74,3 +74,15 @@ and reload the video tab.
 - **Videos inside iframes** (embedded players on other sites) are not controlled.
 - Thresholds come from HoloTouch's measurements and a handful of photos. They need tuning on
   recordings of more people, lighting and cameras.
+
+## License
+
+The code in this repository is under the [MIT License](LICENSE), except the bundled MediaPipe
+runtime and hand model in `extension/vendor/mediapipe/` and `extension/models/`, which are
+Google's, under the Apache License 2.0: see
+[`extension/vendor/mediapipe/NOTICE`](extension/vendor/mediapipe/NOTICE) and its
+[`LICENSE`](extension/vendor/mediapipe/LICENSE).
+
+The gesture design, thresholds and synthetic test hands follow
+[HoloTouch](https://github.com/justanotherinternetguy/HoloTouch) by team HAASHtag (Hendry, Ariana,
+Arthur and Song Han), which was published without a license.

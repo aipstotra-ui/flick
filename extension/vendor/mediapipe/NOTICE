@@ -1,0 +1,14 @@
+Bundled third-party software
+============================
+
+This folder and extension/models/ contain unmodified files from Google's MediaPipe:
+
+  vendor/mediapipe/vision_bundle.mjs                   @mediapipe/tasks-vision 1.1.0 (npm)
+  vendor/mediapipe/wasm/vision_wasm_internal.js        @mediapipe/tasks-vision 1.1.0 (npm)
+  vendor/mediapipe/wasm/vision_wasm_internal.wasm      @mediapipe/tasks-vision 1.1.0 (npm)
+  models/hand_landmarker.task                          MediaPipe Hand Landmarker model (float16)
+                                                       https://storage.googleapis.com/mediapipe-models/
+
+Copyright Google LLC. Licensed under the Apache License, Version 2.0; the full license text,
+with the notices of the third-party code MediaPipe itself includes, is in LICENSE in this folder.
+Source: https://github.com/google-ai-edge/mediapipe
