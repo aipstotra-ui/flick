@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "HoloTouch",
+  "name": "Flick",
   "version": "0.1.0",
   "description": "Control videos and shorts with hand gestures through your webcam. Everything runs on your computer.",
   "minimum_chrome_version": "116",
@@ -11,7 +11,7 @@
   },
   "action": {
     "default_popup": "src/popup/popup.html",
-    "default_title": "HoloTouch",
+    "default_title": "Flick",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",
@@ -25,8 +25,8 @@
     "128": "icons/icon128.png"
   },
   "commands": {
-    "toggle-holotouch": {
-      "suggested_key": { "default": "Alt+Shift+H" },
+    "toggle-flick": {
+      "suggested_key": { "default": "Alt+Shift+F" },
       "description": "Turn gesture control on or off"
     }
   },

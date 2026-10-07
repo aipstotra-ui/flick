@@ -102,7 +102,7 @@ var HTOverlay = (() => {
 
   function mount() {
     if (host) return;
-    host = document.createElement("holotouch-overlay");
+    host = document.createElement("flick-overlay");
     const root = host.attachShadow({ mode: "closed" });
     root.innerHTML = `
       <style>${CSS}</style>

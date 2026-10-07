@@ -40,7 +40,7 @@ export async function loadLandmarker(delegate = "GPU") {
   try {
     return await HandLandmarker.createFromOptions(fileset, options("GPU"));
   } catch (err) {
-    console.warn("HoloTouch: GPU delegate unavailable, using the CPU", err);
+    console.warn("Flick: GPU delegate unavailable, using the CPU", err);
     return HandLandmarker.createFromOptions(fileset, options("CPU"));
   }
 }

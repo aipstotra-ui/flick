@@ -3,12 +3,12 @@
 
 window.addEventListener("message", (event) => {
   const msg = event.data;
-  if (event.source !== window || !msg || msg.source !== "holotouch" || msg.cmd !== "seek") return;
+  if (event.source !== window || !msg || msg.source !== "flick" || msg.cmd !== "seek") return;
   try {
     const api = window.netflix.appContext.state.playerApp.getAPI().videoPlayer;
     const player = api.getVideoPlayerBySessionId(api.getAllPlayerSessionIds()[0]);
     player.seek(msg.ms);
   } catch (err) {
-    console.warn("HoloTouch: Netflix seek failed", err);
+    console.warn("Flick: Netflix seek failed", err);
   }
 });

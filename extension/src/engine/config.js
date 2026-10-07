@@ -37,8 +37,9 @@ export const POSE = {
 export const GESTURE = {
   // A new hand must be in view this long before its gestures count.
   armMs: 250,
-  // A hand not seen for this long is forgotten.
-  lostMs: 250,
+  // A hand not seen for this long is forgotten. MediaPipe often misses a fast-moving hand for a few
+  // frames (motion blur, more so on slow computers), so this outlasts the gap in a swipe.
+  lostMs: 400,
   // Pinches that start while the hand moves faster than this (frame widths/s) are ignored.
   maxPinchOnsetSpeed: 1.2,
   // A pinch released within tapMs that moved less than tapSlop is a tap.
@@ -50,7 +51,7 @@ export const GESTURE = {
   // A swipe covers swipeDistX (or Y) of the frame within swipeWindowMs, mostly along one axis.
   swipeDistX: 0.16,
   swipeDistY: 0.13,
-  swipeWindowMs: 320,
+  swipeWindowMs: 450, // long enough to span the frames a blurred swipe is missing from
   swipeAxisRatio: 1.8,
   // and starts from a hand moving slower than this (frame units/s) just before.
   swipeRestSpeed: 0.9,
@@ -74,6 +75,11 @@ export const GESTURE = {
   // laptop camera; hands on a desk or a lap sit below 0.75.
   raiseEnterY: 0.62,
   raiseExitY: 0.7,
+  // How far the followed hand may move between two frames, in frame widths: at least reachMin, or
+  // what reachSpeed (frame widths a second, a fast swipe) covers in the time between them. Further
+  // than that, it is taken for a different hand. At 12 frames a second a swipe moves 0.2 a frame.
+  reachMin: 0.25,
+  reachSpeed: 4,
   // How quickly the followed hand's left/right reading follows MediaPipe's per-frame label (0..1).
   // One misread frame does not turn a right hand into a left one.
   sideFollow: 0.25,

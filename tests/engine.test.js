@@ -125,3 +125,36 @@ test("a hand moving off right after a drag is not a swipe", () => {
   sim.glide(0.2, "open", [0.7, 0.5], [0.4, 0.5]);
   assert.ok(!sim.types().some((t) => t.startsWith("swipe")), sim.types().join());
 });
+
+test("a fast swipe on a slow computer (10 frames a second) still counts", () => {
+  const sim = new Sim({ fps: 10 });
+  sim.hold(0.6, "open", 0.3, 0.5);
+  // 0.3 of the frame between two frames (3 frame widths a second): further than the fixed 0.25 a
+  // followed hand was once allowed to move, which took it for a different hand and lost the swipe.
+  sim.run(0.2, (f) => [["open", 0.3 + 0.3 * f, 0.5]]);
+  sim.hold(0.5, "open", 0.6, 0.5);
+  assert.deepEqual(sim.types(), ["swipe:right"]);
+});
+
+test("a different hand appearing far away is a new hand, not a swipe", () => {
+  const sim = new Sim();
+  sim.hold(0.6, "open", 0.2, 0.5);
+  sim.hold(0.5, "open", 0.8, 0.5);
+  assert.deepEqual(sim.types(), []);
+});
+
+test("a swipe whose middle frames lose the hand still counts", () => {
+  const sim = new Sim();
+  sim.hold(0.6, "open", 0.3, 0.5);
+  sim.run(0.3, () => []); // the blur: no hand found for 300 ms
+  sim.hold(0.5, "open", 0.66, 0.5);
+  assert.deepEqual(sim.types(), ["swipe:right"]);
+});
+
+test("a hand gone for half a second and back elsewhere is not a swipe", () => {
+  const sim = new Sim();
+  sim.hold(0.6, "open", 0.3, 0.5);
+  sim.run(0.5, () => []);
+  sim.hold(0.5, "open", 0.66, 0.5);
+  assert.deepEqual(sim.types(), []);
+});

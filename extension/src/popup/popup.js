@@ -84,7 +84,7 @@ function renderStatus() {
       dot.classList.add("warn");
       text.textContent = "Camera access needed";
       notice.hidden = false;
-      $("notice-text").textContent = "HoloTouch needs your camera to see your hand. Video stays on this computer.";
+      $("notice-text").textContent = "Flick needs your camera to see your hand. Video stays on this computer.";
       $("notice-action").textContent = "Allow camera";
       return;
     case "error":

@@ -162,7 +162,7 @@ var HTSites = (() => {
       feed: false,
       step: (dir) => dir > 0 && clickFirst(['[data-uia="control-next"]', '[data-uia="next-episode-seamless-button"]']),
       like: () => clickFirst(['[data-uia="thumbs-rate-button"]', '[data-uia="thumbs-up-button"]']),
-      seekTo: (seconds) => window.postMessage({ source: "holotouch", cmd: "seek", ms: Math.round(seconds * 1000) }, location.origin),
+      seekTo: (seconds) => window.postMessage({ source: "flick", cmd: "seek", ms: Math.round(seconds * 1000) }, location.origin),
     },
     {
       name: "Video",

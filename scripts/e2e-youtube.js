@@ -65,7 +65,8 @@ async function photosRGBA(browser) {
       const result = {};
       for (const [name, url] of Object.entries(photos)) {
         const bmp = await createImageBitmap(await (await fetch(url)).blob());
-        const ph = Math.round(h * 0.95);
+        // The palm photo is wide (two hands side by side): smaller, so it stays in frame while it swipes.
+        const ph = Math.round(h * (name === "palm" ? 0.55 : 0.95));
         const pw = Math.round((bmp.width / bmp.height) * ph);
         const c = new OffscreenCanvas(pw, ph);
         c.getContext("2d").drawImage(bmp, 0, 0, pw, ph);
@@ -133,7 +134,7 @@ async function makeWebcam(file, photos) {
 
 /** Playwright's own Chromium if installed, else any Chromium build already in its cache. */
 function findChromium() {
-  if (process.env.HOLOTOUCH_CHROMIUM) return process.env.HOLOTOUCH_CHROMIUM;
+  if (process.env.FLICK_CHROMIUM) return process.env.FLICK_CHROMIUM;
   if (existsSync(chromium.executablePath())) return chromium.executablePath();
   const cache = join(homedir(), "Library", "Caches", "ms-playwright");
   const builds = existsSync(cache) ? readdirSync(cache).filter((d) => /^chromium-\d+$/.test(d)).sort().reverse() : [];
@@ -141,11 +142,11 @@ function findChromium() {
     const exe = join(cache, b, "chrome-mac-arm64", "Google Chrome for Testing.app", "Contents", "MacOS", "Google Chrome for Testing");
     if (existsSync(exe)) return exe;
   }
-  throw new Error("No Chromium found: run npx playwright install chromium, or set HOLOTOUCH_CHROMIUM");
+  throw new Error("No Chromium found: run npx playwright install chromium, or set FLICK_CHROMIUM");
 }
 
 async function main() {
-  const work = mkdtempSync(join(tmpdir(), "holotouch-e2e-"));
+  const work = mkdtempSync(join(tmpdir(), "flick-e2e-"));
   const webcam = join(work, "webcam.y4m");
   const exe = findChromium();
 
@@ -178,9 +179,9 @@ async function main() {
   const t0 = Date.now();
   const stamp = () => `${((Date.now() - t0) / 1000).toFixed(1).padStart(5)}s`;
   page.on("console", (m) => {
-    if (m.text().includes("[HoloTouch]")) log.push(`${stamp()} ${m.text()}`);
+    if (m.text().includes("[Flick]")) log.push(`${stamp()} ${m.text()}`);
   });
-  await page.addInitScript(() => localStorage.setItem("holotouch:debug", "1"));
+  await page.addInitScript(() => localStorage.setItem("flick:debug", "1"));
   await page.goto(URL, { waitUntil: "domcontentloaded" });
   await page.waitForSelector("video", { timeout: 30000 });
   // Close the extension's setup tab; turn gestures on as the setup page would.
@@ -193,6 +194,15 @@ async function main() {
   });
   console.log("Before:", before);
 
+  // Keep a trail of what the engine saw, for when a gesture is missed.
+  await sw.evaluate(() => {
+    self.trail = [];
+    chrome.runtime.onMessage.addListener((m) => {
+      if (m.type !== "ht/frame") return;
+      const st = m.state;
+      self.trail.push([performance.now(), st.present ? +st.x.toFixed(3) : null, st.pose || "-", st.active ? 1 : 0, st.side || "-", m.events.map((e) => e.type + (e.dir || e.name || "")).join(" ")]);
+    });
+  });
   await sw.evaluate(() => chrome.storage.sync.set({ settings: { enabled: true, activation: "wake", hand: "right" } }));
   const states = [];
   // One pass of the fake webcam (it loops), plus the moment the camera takes to start.
@@ -249,6 +259,12 @@ async function main() {
     sleepIgnored: fists === 1,
   };
   console.log(`\nSequence: ${seq.join(" → ")}`);
+  if (process.env.TRAIL) {
+    const trail = await sw.evaluate(() => self.trail);
+    const t0 = trail[0][0];
+    console.log("\nTrail (seconds, x, pose, active, side, events):");
+    for (const r of trail) if (r[1] !== null || r[5]) console.log(((r[0] - t0) / 1000).toFixed(2), ...r.slice(1));
+  }
   console.log("\nResult:");
   for (const [k, label] of EXPECT) console.log(`  ${seen[k] ? "✔" : "✖"} ${label}`);
   await page.screenshot({ path: join(work, "youtube.png") });

@@ -158,7 +158,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 chrome.commands.onCommand.addListener(async (command) => {
-  if (command !== "toggle-holotouch") return;
+  if (command !== "toggle-flick") return;
   const { enabled } = await loadSettings();
   await saveSettings({ enabled: !enabled });
 });

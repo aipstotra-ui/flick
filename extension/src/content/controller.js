@@ -22,8 +22,8 @@
   let lastFrameAt = 0;
   let debug = false;
   try {
-    // Set localStorage["holotouch:debug"] on a page to log the gestures that reach it.
-    debug = !!localStorage.getItem("holotouch:debug");
+    // Set localStorage["flick:debug"] on a page to log the gestures that reach it.
+    debug = !!localStorage.getItem("flick:debug");
   } catch {}
 
   function merge(s) {
@@ -166,7 +166,7 @@
     const site = HTSites.adapter();
     HTOverlay.hand(msg.state, { video, show: settings.showHand && (video || settings.extras) });
     for (const e of msg.events) {
-      if (debug) console.debug("[HoloTouch]", JSON.stringify(e), video ? `on ${site.name} video` : "on page");
+      if (debug) console.debug("[Flick]", JSON.stringify(e), video ? `on ${site.name} video` : "on page");
       if (e.type === "wake") {
         if (video || settings.extras) HTOverlay.toast(video, "hand", "Listening");
         continue;

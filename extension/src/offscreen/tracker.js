@@ -61,7 +61,7 @@ export function createTracker({ track, landmarker, onFrame, onStatus = () => {},
       try {
         if (!shouldSkip(now)) process(frame, now);
       } catch (err) {
-        console.error("HoloTouch: frame failed", err);
+        console.error("Flick: frame failed", err);
       } finally {
         frame.close();
       }

@@ -70,7 +70,8 @@ export function makeHand(pose, x, y, handedness = "Right") {
 
 /** Feeds 30 Hz synthetic frames into a GestureEngine and collects what it emits. */
 export class Sim {
-  constructor(opts) {
+  constructor(opts = {}) {
+    this.fps = opts.fps || 30;
     this.engine = new GestureEngine(opts);
     this.t = 100;
     this.events = [];
@@ -79,7 +80,7 @@ export class Sim {
 
   /** hands(frac) -> list of [pose, x, y, handedness?], frac running 0..1 over the duration. */
   run(duration, hands) {
-    const frames = Math.round(duration * 30);
+    const frames = Math.round(duration * this.fps);
     for (let i = 0; i < frames; i++) {
       const frac = frames > 1 ? i / (frames - 1) : 1;
       const specs = hands ? hands(frac) : [];
@@ -89,7 +90,7 @@ export class Sim {
       );
       this.events.push(...out.events);
       this.state = out.state;
-      this.t += 1 / 30;
+      this.t += 1 / this.fps;
     }
   }
 

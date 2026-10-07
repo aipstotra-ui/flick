@@ -82,11 +82,16 @@ export class GestureEngine {
   }
 
   /** Picks the hand to follow: the one already followed if it is still near, else the largest. */
-  choose(feats) {
+  /** How far the followed hand may have moved since it was last seen, by now, t. */
+  reach(t) {
+    return Math.max(this.cfg.reachMin, this.cfg.reachSpeed * (t - this.hand.lastSeen));
+  }
+
+  choose(feats, t) {
     if (!feats.length) return null;
     if (this.hand) {
       let best = null;
-      let bestD = 0.25;
+      let bestD = this.reach(t);
       for (const f of feats) {
         const d = Math.hypot(f.palm[0] - this.hand.palm[0], f.palm[1] - this.hand.palm[1]);
         if (d < bestD) [best, bestD] = [f, d];
@@ -109,7 +114,7 @@ export class GestureEngine {
   update(hands, t) {
     const events = [];
     const feats = hands.map((h) => extractFeatures(h, this.aspect));
-    const f = this.choose(feats);
+    const f = this.choose(feats, t);
 
     if (!f) {
       if (this.hand && (t - this.hand.lastSeen) * 1000 > this.cfg.lostMs) {
@@ -119,7 +124,7 @@ export class GestureEngine {
       return { events, state: this.state(t) };
     }
 
-    const jumped = this.hand && Math.hypot(f.palm[0] - this.hand.palm[0], f.palm[1] - this.hand.palm[1]) > 0.25;
+    const jumped = this.hand && Math.hypot(f.palm[0] - this.hand.palm[0], f.palm[1] - this.hand.palm[1]) > this.reach(t);
     if (jumped) this.endPinch(events, false);
     if (!this.hand || jumped || (t - this.hand.lastSeen) * 1000 > this.cfg.lostMs) {
       this.hand = this.newHand(t, f.palm);

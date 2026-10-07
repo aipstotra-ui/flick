@@ -1,8 +1,9 @@
-# HoloTouch for video
+# Flick
 
 Control YouTube, Shorts, TikTok, Instagram Reels and Netflix with your hand, through your webcam.
-A Chrome extension, built on the gesture work of [HoloTouch](https://github.com/justanotherinternetguy/HoloTouch)
-(BigRed//Hacks 2026), refocused on watching video from across the room.
+Flick is a Chrome extension built on the gesture work of
+[HoloTouch](https://github.com/justanotherinternetguy/HoloTouch) (BigRed//Hacks 2026), refocused on
+watching video from across the room.
 
 Everything runs on your computer. Camera frames are measured and dropped inside the extension;
 nothing is recorded or uploaded, and the camera is closed whenever gestures are off.
@@ -12,7 +13,7 @@ nothing is recorded or uploaded, and the camera is closed whenever gestures are 
 1. Open `chrome://extensions` and turn on **Developer mode** (top right).
 2. Click **Load unpacked** and choose the `extension` folder.
 3. The setup page opens: allow the camera, try a few gestures, and you're set.
-4. Pin HoloTouch to the toolbar. **Alt+Shift+H** turns gestures on or off.
+4. Pin Flick to the toolbar. **Alt+Shift+F** turns gestures on or off.
 
 ## Gestures
 
