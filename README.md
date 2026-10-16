@@ -1,8 +1,7 @@
 # Flick
 
 Control YouTube, Shorts, TikTok, Instagram Reels and Netflix with your hand, through your webcam.
-Flick is a Chrome extension built on the gesture work of
-[HoloTouch](https://github.com/justanotherinternetguy/HoloTouch) (BigRed//Hacks 2026), refocused on
+Flick is a Chrome extension focused on
 watching video from across the room.
 
 Everything runs on your computer. Camera frames are measured and dropped inside the extension;
@@ -103,7 +102,3 @@ runtime and hand model in `extension/vendor/mediapipe/` and `extension/models/`,
 Google's, under the Apache License 2.0: see
 [`extension/vendor/mediapipe/NOTICE`](extension/vendor/mediapipe/NOTICE) and its
 [`LICENSE`](extension/vendor/mediapipe/LICENSE).
-
-The gesture design, thresholds and synthetic test hands follow
-[HoloTouch](https://github.com/justanotherinternetguy/HoloTouch) by team HAASHtag (Hendry, Ariana,
-Arthur and Song Han), which was published without a license.
